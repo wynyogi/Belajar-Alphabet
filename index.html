@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Belajar Abjad Ceria</title>
+    <title>Game Abjad Ceria Aa-Zz</title>
     <style>
-        /* --- CSS: TAMPILAN --- */
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
             display: flex;
@@ -51,26 +50,11 @@
             font-size: 20px;
             cursor: pointer;
             box-shadow: 0 5px 0 #E68900;
-            transition: all 0.1s;
         }
 
-        .btn-main-lagi {
-            background: #4CAF50;
-            box-shadow: 0 5px 0 #388E3C;
-            margin-top: 20px;
-        }
+        .btn-main-lagi { background: #4CAF50; box-shadow: 0 5px 0 #388E3C; margin-top: 20px; }
 
-        .btn-suara:active, .btn-main-lagi:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 #E68900;
-        }
-
-        .hint-emoji {
-            font-size: 75px;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.2s;
-        }
+        .hint-emoji { font-size: 75px; cursor: pointer; user-select: none; }
 
         .options-grid {
             display: grid;
@@ -92,7 +76,6 @@
             transition: all 0.2s;
         }
 
-        /* Feedback Warna */
         .btn-correct { background-color: #4CAF50 !important; box-shadow: 0 10px 0 #2E7D32 !important; }
         .btn-wrong { background-color: #F44336 !important; box-shadow: 0 10px 0 #B71C1C !important; }
         .correct-bg-body { background-color: #C8E6C9 !important; }
@@ -110,7 +93,6 @@
         }
 
         .final-score { font-size: 100px; color: #4CAF50; margin: 10px; font-weight: bold; }
-        .remidi-tag { color: #d32f2f; font-weight: bold; font-size: 24px; display: block; }
     </style>
 </head>
 <body>
@@ -131,12 +113,10 @@
     <div id="result-screen">
         <h1>Selesai! Nilai Kamu:</h1>
         <div class="final-score" id="final-percent">0%</div>
-        <p id="detail-score" style="font-size: 20px;"></p>
         <button class="btn-main-lagi" onclick="location.reload()">Main Lagi</button>
     </div>
 
     <script>
-        /* --- JS: LOGIKA --- */
         const dataAbjad = [
             {h: 'Aa', n: 'Ayam', e: '🐔'}, {h: 'Bb', n: 'Bola', e: '⚽'}, {h: 'Cc', n: 'Cacing', e: '🪱'},
             {h: 'Dd', n: 'Domba', e: '🐑'}, {h: 'Ee', n: 'Elang', e: '🦅'}, {h: 'Ff', n: 'Flamingo', e: '🦩'},
@@ -149,47 +129,42 @@
             {h: 'Yy', n: 'Yoyo', e: '🪀'}, {h: 'Zz', n: 'Zebra', e: '🦓'}
         ];
 
-        let daftarUtama = [];
-        let daftarRemidi = [];
-        let indexSekarang = 0;
-        let skorBenarUtama = 0;
-        let isRemidi = false;
-        let targetAktif = {};
-        let inputTerkunci = false;
+        let daftarUtama = [], daftarRemidi = [], indexSekarang = 0, skorBenarUtama = 0, isRemidi = false, targetAktif = {}, inputTerkunci = false;
 
         function siapkanGame() {
             daftarUtama = [...dataAbjad].sort(() => Math.random() - 0.5);
             mulaiSesi();
         }
 
+        // FUNGSI SUARA DIPERBARUI: Hanya ambil karakter pertama (A saja)
         function bicara(teks, pitch = 1) {
             window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(teks);
+            
+            // Logika: Jika teks adalah "Aa" atau "Bb", hanya sebut karakter pertamanya saja
+            let teksBersih = teks;
+            if (teks.length === 2 && teks[0].toUpperCase() === teks[0] && teks[1].toLowerCase() === teks[1]) {
+                teksBersih = teks[0]; 
+            }
+
+            const msg = new SpeechSynthesisUtterance(teksBersih);
             msg.lang = 'id-ID';
             msg.pitch = pitch;
             window.speechSynthesis.speak(msg);
         }
 
-        function suaraInstruksi() { bicara(`Manakah huruf ${targetAktif.h}?`); }
+        function suaraInstruksi() { bicara(`Manakah huruf ${targetAktif.h[0]}?`); }
         function suaraBenda() { bicara(targetAktif.n); }
 
         function mulaiSesi() {
             inputTerkunci = false;
             let daftarAktif = isRemidi ? daftarRemidi : daftarUtama;
-            
             if (indexSekarang >= daftarAktif.length) {
-                if (!isRemidi && daftarRemidi.length > 0) {
-                    siapkanRemidi();
-                } else {
-                    tampilkanHasil();
-                }
+                if (!isRemidi && daftarRemidi.length > 0) { siapkanRemidi(); } else { tampilkanHasil(); }
                 return;
             }
-
             document.body.className = '';
             targetAktif = daftarAktif[indexSekarang];
             document.getElementById('display-emoji').innerText = targetAktif.e;
-            
             document.getElementById('status-sesi').innerHTML = isRemidi ? "<span class='remidi-tag'>ULANGI LAGI</span>" : "Sesi Utama";
             document.getElementById('counter').innerText = `Huruf: ${indexSekarang + 1} / ${daftarAktif.length}`;
 
@@ -210,14 +185,12 @@
                 btn.onclick = () => cekJawaban(h);
                 container.appendChild(btn);
             });
-
             setTimeout(suaraInstruksi, 500);
         }
 
         function cekJawaban(pilih) {
             if (inputTerkunci) return;
             inputTerkunci = true;
-
             const btnPilih = document.getElementById("btn-" + pilih);
             const btnBenar = document.getElementById("btn-" + targetAktif.h);
 
@@ -225,26 +198,24 @@
                 if (!isRemidi) skorBenarUtama++;
                 btnPilih.classList.add('btn-correct');
                 document.body.classList.add('correct-bg-body');
-                bicara(`${targetAktif.h} untuk ${targetAktif.n}, Benar!`, 1.1);
+                
+                // Feedback: "A untuk Ayam, Benar!" (Hanya sebut A)
+                bicara(`${targetAktif.h[0]} untuk ${targetAktif.n}, Benar!`, 1.1);
                 indexSekarang++;
             } else {
                 btnPilih.classList.add('btn-wrong');
                 btnBenar.classList.add('btn-correct');
                 document.body.classList.add('wrong-bg-body');
                 bicara("Salah.", 0.6);
-                
-                if (!isRemidi && !daftarRemidi.includes(targetAktif)) {
-                    daftarRemidi.push(targetAktif);
-                }
+                if (!isRemidi && !daftarRemidi.includes(targetAktif)) { daftarRemidi.push(targetAktif); }
                 if (!isRemidi) indexSekarang++; 
             }
             setTimeout(mulaiSesi, 2000);
         }
 
         function siapkanRemidi() {
-            bicara("Ayo ulangi huruf yang tadi salah.", 1);
-            isRemidi = true;
-            indexSekarang = 0;
+            bicara("Ayo ulangi yang tadi salah.", 1);
+            isRemidi = true; indexSekarang = 0;
             setTimeout(mulaiSesi, 2000);
         }
 
@@ -254,10 +225,8 @@
             document.getElementById('info-game').style.display = 'none';
             document.getElementById('result-screen').style.display = 'flex';
             document.getElementById('final-percent').innerText = hasil + "%";
-            document.getElementById('detail-score').innerText = `Skor percobaan pertama: ${skorBenarUtama} dari 26 benar.`;
             bicara(`Selesai! Nilai kamu ${hasil} persen.`);
         }
-
         window.onload = siapkanGame;
     </script>
 </body>

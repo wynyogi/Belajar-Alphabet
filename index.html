@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Belajar Abjad Ceria</title>
+    <style>
+        /* --- CSS: TAMPILAN --- */
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #E0F7FA;
+            transition: background-color 0.4s;
+            overflow: hidden;
+        }
+
+        .stats {
+            position: absolute;
+            top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #006064;
+            text-align: center;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 40px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            width: 85%;
+            max-width: 400px;
+        }
+
+        .btn-suara, .btn-main-lagi {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #E68900;
+            transition: all 0.1s;
+        }
+
+        .btn-main-lagi {
+            background: #4CAF50;
+            box-shadow: 0 5px 0 #388E3C;
+            margin-top: 20px;
+        }
+
+        .btn-suara:active, .btn-main-lagi:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #E68900;
+        }
+
+        .hint-emoji {
+            font-size: 75px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .char-btn {
+            width: 140px;
+            height: 140px;
+            font-size: 55px;
+            font-weight: bold;
+            border: none;
+            border-radius: 35px;
+            background-color: #0288D1;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 0 #01579B;
+            transition: all 0.2s;
+        }
+
+        /* Feedback Warna */
+        .btn-correct { background-color: #4CAF50 !important; box-shadow: 0 10px 0 #2E7D32 !important; }
+        .btn-wrong { background-color: #F44336 !important; box-shadow: 0 10px 0 #B71C1C !important; }
+        .correct-bg-body { background-color: #C8E6C9 !important; }
+        .wrong-bg-body { background-color: #FFCDD2 !important; }
+
+        #result-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: white;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .final-score { font-size: 100px; color: #4CAF50; margin: 10px; font-weight: bold; }
+        .remidi-tag { color: #d32f2f; font-weight: bold; font-size: 24px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="stats" id="info-game">
+        <div id="status-sesi">Sesi Utama</div>
+        <div id="counter">Huruf: 1 / 26</div>
+    </div>
+
+    <div id="game-ui" style="text-align: center;">
+        <div class="header-controls">
+            <button class="btn-suara" onclick="suaraInstruksi()">🔊 Ulangi</button>
+            <div class="hint-emoji" id="display-emoji" onclick="suaraBenda()">❓</div>
+        </div>
+        <div class="options-grid" id="container-opsi"></div>
+    </div>
+
+    <div id="result-screen">
+        <h1>Selesai! Nilai Kamu:</h1>
+        <div class="final-score" id="final-percent">0%</div>
+        <p id="detail-score" style="font-size: 20px;"></p>
+        <button class="btn-main-lagi" onclick="location.reload()">Main Lagi</button>
+    </div>
+
+    <script>
+        /* --- JS: LOGIKA --- */
+        const dataAbjad = [
+            {h: 'Aa', n: 'Ayam', e: '🐔'}, {h: 'Bb', n: 'Bola', e: '⚽'}, {h: 'Cc', n: 'Cacing', e: '🪱'},
+            {h: 'Dd', n: 'Domba', e: '🐑'}, {h: 'Ee', n: 'Elang', e: '🦅'}, {h: 'Ff', n: 'Flamingo', e: '🦩'},
+            {h: 'Gg', n: 'Gajah', e: '🐘'}, {h: 'Hh', n: 'Harimau', e: '🐯'}, {h: 'Ii', n: 'Ikan', e: '🐟'},
+            {h: 'Jj', n: 'Jeruk', e: '🍊'}, {h: 'Kk', n: 'Kucing', e: '🐱'}, {h: 'Ll', n: 'Lumba-lumba', e: '🐬'},
+            {h: 'Mm', n: 'Mangga', e: '🥭'}, {h: 'Nn', n: 'Nanas', e: '🍍'}, {h: 'Oo', n: 'Obat', e: '💊'},
+            {h: 'Pp', n: 'Pisang', e: '🍌'}, {h: 'Qq', n: 'Quran', e: '📖'}, {h: 'Rr', n: 'Roti', e: '🍞'},
+            {h: 'Ss', n: 'Sapi', e: '🐄'}, {h: 'Tt', n: 'Tikus', e: '🐭'}, {h: 'Uu', n: 'Ular', e: '🐍'},
+            {h: 'Vv', n: 'Vas', e: '🏺'}, {h: 'Ww', n: 'Wortel', e: '🥕'}, {h: 'Xx', n: 'X-Ray', e: '🩻'},
+            {h: 'Yy', n: 'Yoyo', e: '🪀'}, {h: 'Zz', n: 'Zebra', e: '🦓'}
+        ];
+
+        let daftarUtama = [];
+        let daftarRemidi = [];
+        let indexSekarang = 0;
+        let skorBenarUtama = 0;
+        let isRemidi = false;
+        let targetAktif = {};
+        let inputTerkunci = false;
+
+        function siapkanGame() {
+            daftarUtama = [...dataAbjad].sort(() => Math.random() - 0.5);
+            mulaiSesi();
+        }
+
+        function bicara(teks, pitch = 1) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(teks);
+            msg.lang = 'id-ID';
+            msg.pitch = pitch;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function suaraInstruksi() { bicara(`Manakah huruf ${targetAktif.h}?`); }
+        function suaraBenda() { bicara(targetAktif.n); }
+
+        function mulaiSesi() {
+            inputTerkunci = false;
+            let daftarAktif = isRemidi ? daftarRemidi : daftarUtama;
+            
+            if (indexSekarang >= daftarAktif.length) {
+                if (!isRemidi && daftarRemidi.length > 0) {
+                    siapkanRemidi();
+                } else {
+                    tampilkanHasil();
+                }
+                return;
+            }
+
+            document.body.className = '';
+            targetAktif = daftarAktif[indexSekarang];
+            document.getElementById('display-emoji').innerText = targetAktif.e;
+            
+            document.getElementById('status-sesi').innerHTML = isRemidi ? "<span class='remidi-tag'>ULANGI LAGI</span>" : "Sesi Utama";
+            document.getElementById('counter').innerText = `Huruf: ${indexSekarang + 1} / ${daftarAktif.length}`;
+
+            let pilihan = [targetAktif.h];
+            while(pilihan.length < 4) {
+                let acak = dataAbjad[Math.floor(Math.random() * 26)].h;
+                if(!pilihan.includes(acak)) pilihan.push(acak);
+            }
+            pilihan.sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('container-opsi');
+            container.innerHTML = '';
+            pilihan.forEach(h => {
+                const btn = document.createElement('button');
+                btn.className = 'char-btn';
+                btn.id = "btn-" + h;
+                btn.innerText = h;
+                btn.onclick = () => cekJawaban(h);
+                container.appendChild(btn);
+            });
+
+            setTimeout(suaraInstruksi, 500);
+        }
+
+        function cekJawaban(pilih) {
+            if (inputTerkunci) return;
+            inputTerkunci = true;
+
+            const btnPilih = document.getElementById("btn-" + pilih);
+            const btnBenar = document.getElementById("btn-" + targetAktif.h);
+
+            if (pilih === targetAktif.h) {
+                if (!isRemidi) skorBenarUtama++;
+                btnPilih.classList.add('btn-correct');
+                document.body.classList.add('correct-bg-body');
+                bicara(`${targetAktif.h} untuk ${targetAktif.n}, Benar!`, 1.1);
+                indexSekarang++;
+            } else {
+                btnPilih.classList.add('btn-wrong');
+                btnBenar.classList.add('btn-correct');
+                document.body.classList.add('wrong-bg-body');
+                bicara("Salah.", 0.6);
+                
+                if (!isRemidi && !daftarRemidi.includes(targetAktif)) {
+                    daftarRemidi.push(targetAktif);
+                }
+                if (!isRemidi) indexSekarang++; 
+            }
+            setTimeout(mulaiSesi, 2000);
+        }
+
+        function siapkanRemidi() {
+            bicara("Ayo ulangi huruf yang tadi salah.", 1);
+            isRemidi = true;
+            indexSekarang = 0;
+            setTimeout(mulaiSesi, 2000);
+        }
+
+        function tampilkanHasil() {
+            const hasil = Math.round((skorBenarUtama / 26) * 100);
+            document.getElementById('game-ui').style.display = 'none';
+            document.getElementById('info-game').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'flex';
+            document.getElementById('final-percent').innerText = hasil + "%";
+            document.getElementById('detail-score').innerText = `Skor percobaan pertama: ${skorBenarUtama} dari 26 benar.`;
+            bicara(`Selesai! Nilai kamu ${hasil} persen.`);
+        }
+
+        window.onload = siapkanGame;
+    </script>
+</body>
+</html>
